@@ -1,16 +1,103 @@
-# React + Vite
+# Akıllı Silo Sensör Yerleşim Sistemi
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Bu proje, endüstriyel silolarda kullanılan seviye sensörlerinin en uygun konumlara yerleştirilmesini sağlamak amacıyla geliştirilen 3 boyutlu bir karar destek ve optimizasyon sistemidir.
 
-Currently, two official plugins are available:
+Proje, Yazılım Mühendisliği stajı kapsamında React ve Three.js teknolojileri kullanılarak geliştirilmektedir.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+# Projenin Amacı
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Endüstriyel silolarda sensörlerin yanlış konumlandırılması, kör noktaların oluşmasına ve ölçüm doğruluğunun azalmasına neden olabilir.
 
-## Expanding the ESLint configuration
+Bu projenin amacı;
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Farklı silo tiplerini üç boyutlu olarak modellemek,
+- Sensörlerin görüş alanlarını analiz etmek,
+- Kör noktaları belirlemek,
+- Sensörlerin kapsama oranlarını hesaplamak,
+- En uygun sensör yerleşimini kullanıcıya önermektir.
+
+> Proje, tahılın fiziksel davranışını simüle etmekten ziyade sensör yerleşiminin montaj öncesinde optimize edilmesine odaklanmaktadır.
+
+---
+
+# Kullanılan Teknolojiler
+
+- React
+- Three.js
+- Vite
+- JavaScript
+
+---
+
+# Mevcut Özellikler
+
+- 3 boyutlu parametrik silo modelleme
+- Birden fazla silo geometrisi desteği
+- Ayarlanabilir silo boyutları
+- Sensör yerleşimi
+- Ayarlanabilir sensör görüş açısı (FOV)
+- Ayarlanabilir sensör algılama menzili
+- Sensör görüş hacmi görselleştirmesi
+- Gerçek zamanlı kapsama analizi
+- Kör nokta tespiti
+- Kapsama yüzdesi hesaplama
+- Tek sensör için en uygun yerleşim önerisi
+
+---
+
+# Proje Yol Haritası
+
+- [x] Aşama 1 - Proje altyapısı
+- [x] Aşama 2 - Parametrik silo modeli
+- [x] Aşama 3 - Sensör sistemi
+- [x] Aşama 4 - Kapsama analizi
+- [x] Aşama 5 - Tek sensör optimizasyonu
+- [ ] Aşama 6 - Çoklu sensör sistemi
+- [ ] Aşama 7 - Gelişmiş optimizasyon algoritması
+- [ ] Aşama 8 - Raporlama sistemi
+- [ ] Aşama 9 - Tahıl simülasyonu (Opsiyonel)
+
+---
+
+# Devam Eden Geliştirmeler
+
+- Çoklu sensör desteği
+- Sensörler arası ortak kapsama analizi
+- Kör noktaların en aza indirilmesi
+- En uygun sensör sayısının belirlenmesi
+
+---
+
+# Gelecek Çalışmalar
+
+- Gelişmiş optimizasyon algoritmaları
+- Kapsama alanı ısı haritası (Heatmap)
+- PDF raporlama sistemi
+- Tahıl simülasyonu ile doğrulama (Opsiyonel)
+
+---
+
+# Kurulum
+
+Projeyi yerel ortamda çalıştırmak için:
+
+```bash
+npm install
+npm run dev
+```
+
+---
+
+# Ekran Görüntüleri
+
+> Proje geliştikçe bu bölüme ekran görüntüleri eklenecektir.
+
+---
+
+# Geliştirici
+
+**Nurefşan**
+
+Yazılım Mühendisliği Staj Projesi
