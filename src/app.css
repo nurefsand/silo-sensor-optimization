@@ -1,0 +1,225 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #1a1a1a;
+}
+
+/* ---------- Navbar ---------- */
+
+.navbar {
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-logo {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.navbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #111;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: #6b6b6b;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.icon-button:hover {
+  background: #f0f0f0;
+  color: #1a1a1a;
+}
+
+/* ---------- Gövde: sol panel + sahne ---------- */
+
+.app-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* ---------- Kontrol paneli ---------- */
+
+.control-panel {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  border-right: 1px solid #e6e6e6;
+  overflow-y: auto;
+}
+
+.panel-block {
+  padding: 24px;
+}
+
+.panel-block-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #a3a3a3;
+  margin: 0 0 18px;
+}
+
+.panel-divider {
+  height: 1px;
+  background: #e6e6e6;
+  margin: 0 24px;
+}
+
+.panel-section {
+  margin-bottom: 22px;
+}
+
+.panel-section--last {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #6b6b6b;
+  margin: 0 0 12px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 7px;
+}
+
+.field-value {
+  font-variant-numeric: tabular-nums;
+  color: #2c7be5;
+  font-weight: 500;
+  font-size: 12.5px;
+}
+
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid #d5d5d5;
+  font-size: 13.5px;
+  background: white;
+  color: #1a1a1a;
+}
+
+.field input[type="range"] {
+  width: 100%;
+  accent-color: #2c7be5;
+}
+
+.checkbox-field label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #2c7be5;
+}
+
+/* ---------- Model Bilgisi (panel içi, artık yüzen değil) ---------- */
+
+.model-info-card {
+  font-size: 12.5px;
+  color: #333;
+}
+
+.info-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: #666;
+}
+
+.info-card-row strong {
+  color: #222;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.info-card-volume {
+  color: #2c7be5;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.info-card-volume strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Sahne ---------- */
+
+.scene-panel {
+  flex: 1;
+  position: relative;
+}

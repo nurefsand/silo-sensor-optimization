@@ -1,0 +1,25 @@
+// Varsayılan silo boyutları
+export const DEFAULT_SILO = {
+  type: "vertical",
+  height: 15,      // metre
+  diameter: 6,     // metre
+  length: 12       // sadece yatay/dikdörtgen için
+};
+
+// Boyut sınırları
+export const LIMITS = {
+  minHeight: 2,
+  maxHeight: 30,
+
+  minDiameter: 2,
+  maxDiameter: 15,
+
+  minLength: 2,
+  maxLength: 50
+};
+
+// Şimdilik örnek sensör değerleri
+export const DEFAULT_SENSOR = {
+  angle: 60,      // derece
+  range: 20       // metre
+};
