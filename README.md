@@ -2,7 +2,7 @@
 
 Bu proje, endüstriyel silolarda kullanılan seviye sensörlerinin en uygun konumlara yerleştirilmesini sağlamak amacıyla geliştirilen 3 boyutlu bir karar destek ve optimizasyon sistemidir.
 
-Proje, Yazılım Mühendisliği stajı kapsamında React ve Three.js teknolojileri kullanılarak geliştirilmektedir.
+Proje, Bilgisayar Mühendisliği stajı kapsamında React ve Three.js teknolojileri kullanılarak geliştirilmektedir.
 
 ---
 
@@ -18,7 +18,6 @@ Bu projenin amacı;
 - Sensörlerin kapsama oranlarını hesaplamak,
 - En uygun sensör yerleşimini kullanıcıya önermektir.
 
-> Proje, tahılın fiziksel davranışını simüle etmekten ziyade sensör yerleşiminin montaj öncesinde optimize edilmesine odaklanmaktadır.
 
 ---
 
@@ -56,7 +55,7 @@ Bu projenin amacı;
 - [x] Aşama 5 - Tek sensör optimizasyonu
 - [ ] Aşama 6 - Çoklu sensör sistemi
 - [ ] Aşama 7 - Gelişmiş optimizasyon algoritması
-- [ ] Aşama 8 - Raporlama sistemi
+- [ ] Aşama 8 - Raporlama
 - [ ] Aşama 9 - Tahıl simülasyonu (Opsiyonel)
 
 ---
@@ -73,8 +72,6 @@ Bu projenin amacı;
 # Gelecek Çalışmalar
 
 - Gelişmiş optimizasyon algoritmaları
-- Kapsama alanı ısı haritası (Heatmap)
-- PDF raporlama sistemi
 - Tahıl simülasyonu ile doğrulama (Opsiyonel)
 
 ---
@@ -98,6 +95,6 @@ npm run dev
 
 # Geliştirici
 
-**Nurefşan**
+**Nurefşan Dolaş**
 
-Yazılım Mühendisliği Staj Projesi
+Bilgisayar Mühendisliği Staj Projesi
