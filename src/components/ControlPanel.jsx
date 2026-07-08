@@ -1,7 +1,7 @@
 import { SILO_TYPES, FIELD_LABELS, FIELD_RANGES, getSiloTypeConfig } from "../geometry/siloTypes";
 import InfoCard from "./InfoCard";
 import HeatmapRenderer from "./HeatmapRenderer";
-import { OPTIMIZER_WEIGHTS } from "../config/constants"; // Ağırlık sabitleri
+import { OPTIMIZER_WEIGHTS } from "../config/constants"; 
 
 const SENSOR_RANGES = {
   fov: { min: 20, max: 120, step: 1 },
@@ -9,17 +9,19 @@ const SENSOR_RANGES = {
 };
 
 export default function ControlPanel({
-  siloType, setSiloType, dims, updateDim, wireframe, setWireframe,
-  sensorFov, setSensorFov, sensorRange, setSensorRange,
+  siloType, setSiloType, 
+  dims, updateDim, 
+  wireframe, setWireframe,
+  sensorFov, setSensorFov, 
+  sensorRange, setSensorRange,
+  sensorCount, setSensorCount,
   metrics, onOptimize,
 }) {
   const activeFields = getSiloTypeConfig(siloType).fields;
 
-  // Güvenli değer okumaları (Optional Chaining)
   const coverageVal = metrics?.coveragePercent ?? 0;
   const blindSpotVal = metrics?.blindSpot ?? metrics?.blindSpotPercent ?? 100;
 
-  // Seçili sensörün merkezden uzaklığını matematiksel olarak geri çözme
   const symScore = metrics?.scoreDetails ? parseFloat(metrics.scoreDetails.symmetryScore) / 100 : 1;
   const deviation = ((1 - symScore) * (dims.diameter / 2)).toFixed(2);
 
@@ -63,6 +65,18 @@ export default function ControlPanel({
           <h3 className="section-title">Sensör Ayarları</h3>
           <div className="field">
             <label>
+              <span>Sensör Sayısı</span>
+              <span className="field-value" style={{ fontWeight: 'bold', color: '#2980b9' }}>
+                {sensorCount} Adet
+              </span>
+            </label>
+            <input
+              type="range" min={1} max={12} step={1}
+              value={sensorCount} onChange={(e) => setSensorCount(parseInt(e.target.value))}
+            />
+          </div>
+          <div className="field">
+            <label>
               <span>Görüş Açısı</span>
               <span className="field-value">{sensorFov?.toFixed(0)}°</span>
             </label>
@@ -100,18 +114,20 @@ export default function ControlPanel({
 
           <button 
             className="optimize-btn" onClick={onOptimize}
+            disabled={sensorCount > 1}
             style={{ 
-              marginTop: '15px', width: '100%', padding: '10px', cursor: 'pointer',
-              backgroundColor: '#4a90e2', color: 'white', border: 'none',
+              marginTop: '15px', width: '100%', padding: '10px', 
+              cursor: sensorCount > 1 ? 'not-allowed' : 'pointer',
+              backgroundColor: sensorCount > 1 ? '#95a5a6' : '#4a90e2',
+              color: 'white', border: 'none',
               borderRadius: '4px', fontWeight: 'bold', transition: 'background-color 0.2s'
             }}
           >
-            En İyi Konumu Bul ⚡
+            {sensorCount > 1 ? "Çoklu Optimizasyon Yakında" : "En İyi Konumu Bul ⚡"}
           </button>
         </section>
 
-        {/* Karar Motoru Raporu */}
-        {metrics?.scoreDetails && (
+        {metrics?.scoreDetails && sensorCount === 1 && (
           <section className="panel-section" style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
             <h3 className="section-title" style={{ color: '#2c3e50', marginBottom: '10px' }}>Karar Algoritması Skoru</h3>
             
@@ -122,7 +138,6 @@ export default function ControlPanel({
               </span>
             </div>
 
-            {/* AÇIK MATEMATİKSEL FORMÜL */}
             <div style={{ fontSize: '11px', color: '#7f8c8d', background: '#fff', padding: '8px', borderRadius: '4px', marginBottom: '12px', border: '1px dashed #bdc3c7' }}>
               <strong>Optimizasyon Ağırlıkları:</strong><br/>
               (Kapsama × %{OPTIMIZER_WEIGHTS.coverage * 100}) + 
@@ -150,7 +165,6 @@ export default function ControlPanel({
 
             <hr style={{ borderColor: '#eee', margin: '12px 0' }}/>
             
-            {/* SEÇİLEN SENSÖRÜN MONTAJ VE FİZİKSEL DETAYLARI */}
             <h3 className="section-title" style={{ color: '#2c3e50', fontSize: '12px', marginBottom: '8px' }}>Sensör Montaj Bilgileri</h3>
             <div className="field" style={{ fontSize: '12px', color: '#666' }}>
               <label>Montaj Yüksekliği</label>

@@ -1,31 +1,53 @@
-import { useState, useRef } from "react";
-import Navbar from "./components/Navbar";
-import ControlPanel from "./components/ControlPanel";
-import SiloScene from "./components/SiloScene";
-import "./App.css";
+import { useState, useRef } from 'react';
+import Navbar from './components/Navbar';
+import SiloScene from './components/SiloScene';
+import ControlPanel from './components/ControlPanel';
+import './App.css'; 
 
 function App() {
-  // --- State Tanımlamaları ---
-  const [siloType, setSiloType] = useState("cylinder");
+  const [siloType, setSiloType] = useState('cylinder');
   const [wireframe, setWireframe] = useState(false);
-  const [dims, setDims] = useState({ height: 8, diameter: 4, length: 10, coneHeight: 2 });
-  const [sensorFov, setSensorFov] = useState(60);
-  const [sensorRange, setSensorRange] = useState(15);
   
-  // Analiz sonuçlarını tutacak state
-  const [metrics, setMetrics] = useState({ coveragePercent: 0, blindSpotPercent: 100 });
+  const [dims, setDims] = useState({
+    diameter: 12.0,
+    height: 10.0,
+    length: 10.0, 
+    width: 4.0,   
+    coneHeight: 2.5
+  });
 
-  // Optimizasyon fonksiyonu için referans
-  const optimizeRef = useRef(null);
+  const [sensorFov, setSensorFov] = useState(29);
+  const [sensorRange, setSensorRange] = useState(15.0);
+  const [sensorCount, setSensorCount] = useState(1);
+
+  const [analysisData, setAnalysisData] = useState(null);
+  const onOptimizeRef = useRef(null);
 
   const updateDim = (key, value) => {
-    setDims((prev) => ({ ...prev, [key]: value }));
+    setDims(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleOptimize = () => {
+    if (onOptimizeRef.current) {
+      onOptimizeRef.current(); 
+    }
   };
 
   return (
-    <div className="app-shell">
+    // Kök sarmalayıcı: Tam ekran, dikey dizilim ve garantili modern yazı tipi
+    <div className="app-container" style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100vh', 
+      fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif' 
+    }}>
+      
       <Navbar />
-      <div className="app-body">
+
+      {/* Ana içerik alanı: ControlPanel ve SiloScene yan yana */}
+      <div className="main-content" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        
+        {/* Ekstra sidebar div'i SİLİNDİ! ControlPanel doğrudan eklendi. Beyaz boşluk sorunu çözüldü. */}
         <ControlPanel
           siloType={siloType}
           setSiloType={setSiloType}
@@ -37,22 +59,25 @@ function App() {
           setSensorFov={setSensorFov}
           sensorRange={sensorRange}
           setSensorRange={setSensorRange}
-          metrics={metrics}
-          // Optimizasyon fonksiyonunu butona bağlıyoruz
-          onOptimize={() => optimizeRef.current?.()} 
+          sensorCount={sensorCount}
+          setSensorCount={setSensorCount}
+          metrics={analysisData}
+          onOptimize={handleOptimize}
         />
-        <div className="scene-panel">
+
+        <div className="scene-container" style={{ flex: 1, position: 'relative' }}>
           <SiloScene
             siloType={siloType}
             dims={dims}
             wireframe={wireframe}
             sensorFov={sensorFov}
             sensorRange={sensorRange}
-            onAnalysisUpdate={setMetrics}
-            // Referansı SiloScene'e paslıyoruz
-            onOptimizeRef={optimizeRef} 
+            sensorCount={sensorCount}
+            onAnalysisUpdate={setAnalysisData}
+            onOptimizeRef={onOptimizeRef}
           />
         </div>
+
       </div>
     </div>
   );
