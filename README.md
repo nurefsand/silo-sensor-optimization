@@ -53,8 +53,8 @@ Bu projenin amacı;
 - [x] Aşama 3 - Sensör sistemi
 - [x] Aşama 4 - Kapsama analizi
 - [x] Aşama 5 - Tek sensör optimizasyonu
-- [ ] Aşama 6 - Çoklu sensör sistemi
-- [ ] Aşama 7 - Gelişmiş optimizasyon algoritması
+- [x] Aşama 6 - Çoklu sensör sistemi
+- [x] Aşama 7 - Gelişmiş optimizasyon algoritması
 - [ ] Aşama 8 - Raporlama
 - [ ] Aşama 9 - Tahıl simülasyonu (Opsiyonel)
 
