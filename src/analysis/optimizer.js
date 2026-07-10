@@ -74,7 +74,7 @@ function isTooCloseToOthers(point, others, minDist = 1.0) {
 }
 
 // ÇOKLU SENSÖR İÇİN
-// Sprint notu: Bu fonksiyon iki aşamalı çalışır:
+// Not: Bu fonksiyon iki aşamalı çalışır:
 //  1) EKLEME: initialPositions, count'tan azsa, eksik sensörleri greedy şekilde ekler
 //     (eskiden de vardı, korundu).
 //  2) İYİLEŞTİRME (YENİ): initialPositions zaten count kadarsa (senin kullanım şeklin bu),

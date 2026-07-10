@@ -16,7 +16,7 @@ export default function InfoCard({ siloType, dims, sensorFov, sensorRange }) {
         ))}
       </div>
 
-      {/* Sprint 2: sensör bilgileri de bilgi kartına eklendi */}
+      {/* Aşama 2: sensör bilgileri de bilgi kartına eklendi */}
       <div className="info-card-row">
         <span>
           Sensör Açısı: <strong>{sensorFov.toFixed(0)}°</strong>

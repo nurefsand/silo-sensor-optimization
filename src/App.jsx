@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import Navbar from './components/Navbar';
 import SiloScene from './components/SiloScene';
 import ControlPanel from './components/ControlPanel';
+import ResultPanel from './components/ResultPanel';
 import './App.css'; 
 
 function App() {
@@ -23,6 +24,15 @@ function App() {
   const [analysisData, setAnalysisData] = useState(null);
   const onOptimizeRef = useRef(null);
 
+  // --- Sprint 7: "Optimum Sensör Sayısı" önerisi için state ve ref'ler ---
+  const [maxSuggestCount, setMaxSuggestCount] = useState(6);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [suggestionProgress, setSuggestionProgress] = useState(null);
+  const [suggestionResults, setSuggestionResults] = useState([]);
+  const [suggestionBest, setSuggestionBest] = useState(null);
+  const onSuggestRef = useRef(null);
+  const onApplySuggestionRef = useRef(null);
+
   const updateDim = (key, value) => {
     setDims(prev => ({ ...prev, [key]: value }));
   };
@@ -33,8 +43,37 @@ function App() {
     }
   };
 
+  // sensorSuggester.js artık async - burada da await ediyoruz
+  const handleRunSuggestion = async () => {
+    if (!onSuggestRef.current || isAnalyzing) return;
+
+    setIsAnalyzing(true);
+    setSuggestionResults([]);
+    setSuggestionBest(null);
+    setSuggestionProgress({ count: 0, maxCount: maxSuggestCount });
+
+    const result = await onSuggestRef.current(maxSuggestCount, (entry, maxCount) => {
+      setSuggestionProgress({ count: entry.count, maxCount });
+      setSuggestionResults((prev) => [...prev, entry]);
+    });
+
+    if (result) {
+      setSuggestionBest(result.suggestion);
+    }
+    setIsAnalyzing(false);
+  };
+
+  // ÖNEMLİ: sensorCount'u ÖNCE değiştiriyoruz, SONRA pozisyonları uyguluyoruz.
+  // Aksi halde SiloScene'deki `multiPositions.length === sensorCount` kontrolü
+  // eşleşmez ve önerilen pozisyonlar yerine eşit-aralıklı diziliş kullanılır.
+  const handleApplySuggestion = (entry) => {
+    setSensorCount(entry.count);
+    if (onApplySuggestionRef.current) {
+      onApplySuggestionRef.current(entry);
+    }
+  };
+
   return (
-    // Kök sarmalayıcı: Tam ekran, dikey dizilim ve garantili modern yazı tipi
     <div className="app-container" style={{ 
       display: 'flex', 
       flexDirection: 'column', 
@@ -44,26 +83,39 @@ function App() {
       
       <Navbar />
 
-      {/* Ana içerik alanı: ControlPanel ve SiloScene yan yana */}
       <div className="main-content" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         
-        {/* Ekstra sidebar div'i SİLİNDİ! ControlPanel doğrudan eklendi. Beyaz boşluk sorunu çözüldü. */}
-        <ControlPanel
-          siloType={siloType}
-          setSiloType={setSiloType}
-          dims={dims}
-          updateDim={updateDim}
-          wireframe={wireframe}
-          setWireframe={setWireframe}
-          sensorFov={sensorFov}
-          setSensorFov={setSensorFov}
-          sensorRange={sensorRange}
-          setSensorRange={setSensorRange}
-          sensorCount={sensorCount}
-          setSensorCount={setSensorCount}
-          metrics={analysisData}
-          onOptimize={handleOptimize}
-        />
+        <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <ControlPanel
+            siloType={siloType}
+            setSiloType={setSiloType}
+            dims={dims}
+            updateDim={updateDim}
+            wireframe={wireframe}
+            setWireframe={setWireframe}
+            sensorFov={sensorFov}
+            setSensorFov={setSensorFov}
+            sensorRange={sensorRange}
+            setSensorRange={setSensorRange}
+            sensorCount={sensorCount}
+            setSensorCount={setSensorCount}
+            metrics={analysisData}
+            onOptimize={handleOptimize}
+          />
+
+          <div className="panel-divider" />
+
+          <ResultPanel
+            maxSuggestCount={maxSuggestCount}
+            setMaxSuggestCount={setMaxSuggestCount}
+            isAnalyzing={isAnalyzing}
+            progress={suggestionProgress}
+            results={suggestionResults}
+            suggestion={suggestionBest}
+            onRunSuggestion={handleRunSuggestion}
+            onApplySuggestion={handleApplySuggestion}
+          />
+        </div>
 
         <div className="scene-container" style={{ flex: 1, position: 'relative' }}>
           <SiloScene
@@ -75,6 +127,8 @@ function App() {
             sensorCount={sensorCount}
             onAnalysisUpdate={setAnalysisData}
             onOptimizeRef={onOptimizeRef}
+            onSuggestRef={onSuggestRef}
+            onApplySuggestionRef={onApplySuggestionRef}
           />
         </div>
 

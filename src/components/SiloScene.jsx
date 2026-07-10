@@ -6,6 +6,7 @@ import { createSensorMesh } from "../geometry/sensorGeometry";
 import { CoverageMap } from "../analysis/coverageMap";
 import { generateCandidates } from "../analysis/candidateGenerator";
 import { findBestPosition, findBestMultiPosition } from "../analysis/optimizer";
+import { suggestOptimalSensorCount } from "../analysis/Sensorsuggester";
 
 // 3D Bilgi Etiketi Üreticisi
 function createLabelSprite(text1, text2) {
@@ -34,7 +35,9 @@ function createLabelSprite(text1, text2) {
 }
 
 export default function SiloScene({
-  siloType, dims, wireframe, sensorFov, sensorRange, sensorCount = 1, onAnalysisUpdate, onOptimizeRef
+  siloType, dims, wireframe, sensorFov, sensorRange, sensorCount = 1,
+  onAnalysisUpdate, onOptimizeRef,
+  onSuggestRef, onApplySuggestionRef, // Aşama 7.2: yeni prop'lar
 }) {
   const mountRef = useRef(null);
   const siloGroupRef = useRef(null);
@@ -117,6 +120,36 @@ export default function SiloScene({
       };
     }
   }, [siloType, dims, sensorFov, sensorRange, sensorCount, onOptimizeRef]);
+
+  // --- Aşama 7.2 (1/2): "Optimum sayıyı öner" - analiz döngüsünü tetikler ---
+  // candidates/box'a ihtiyaç duyduğu için (App.jsx'in erişemediği currentBoxRef),
+  // bu fonksiyon burada, mevcut onOptimizeRef ile birebir aynı desende tanımlanıyor.
+  useEffect(() => {
+    if (onSuggestRef) {
+      onSuggestRef.current = async (maxCount, onProgress) => {
+        if (!currentBoxRef.current) return null;
+        const candidates = generateCandidates(siloType, dims, currentBoxRef.current);
+        return suggestOptimalSensorCount(siloType, dims, sensorFov, sensorRange, candidates, maxCount, { onProgress });
+      };
+    }
+  }, [siloType, dims, sensorFov, sensorRange, onSuggestRef]);
+
+  // --- Aşama 7.2 (2/2): önerilen bir sayının pozisyonlarını DOĞRUDAN uygula ---
+  // sensorSuggester zaten o count için en iyi pozisyonları hesapladığı için
+  // burada optimizer'ı TEKRAR çalıştırmıyoruz - doğrudan multiPositions'a yazıyoruz.
+  // Not: App.jsx bu fonksiyonu çağırmadan HEMEN ÖNCE sensorCount'u entry.count'a
+  // eşitlemeli, aksi halde render efektindeki `multiPositions.length === sensorCount`
+  // kontrolü eşleşmez ve pozisyonlar yerine tekrar eşit-aralıklı diziliş kullanılır.
+  useEffect(() => {
+    if (onApplySuggestionRef) {
+      onApplySuggestionRef.current = (entry) => {
+        if (!entry || !entry.sensors) return;
+        setMultiPositions(entry.sensors.map(s => new THREE.Vector3(s.pos.x, s.pos.y, s.pos.z)));
+        setBestScoreDetails(null);
+        setSensorPos(null);
+      };
+    }
+  }, [onApplySuggestionRef]);
 
   useEffect(() => {
     const mount = mountRef.current;
