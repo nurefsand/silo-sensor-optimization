@@ -26,17 +26,27 @@ export class CoverageMap {
         }
 
         if (isValid) {
-          rowArray.push(0); // 0: Hiç görülmedi (Kör Nokta)
+          rowArray.push(0); 
           this.validCellCount++;
         } else {
-          rowArray.push(-1); // Silo dışı
+          rowArray.push(-1); 
         }
       }
       this.grid.push(rowArray);
     }
   }
 
-  //Artık tek sensör yerine bir sensör dizisi alıyor
+  // OPTİMİZASYON İÇİN GEREKLİ METOT
+  reset() {
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        if (this.grid[r][c] !== -1) {
+          this.grid[r][c] = 0;
+        }
+      }
+    }
+  }
+
   applyMultiSensorCoverage(sensors) {
     let width = this.dims.diameter;
     let length = (this.siloType === "horizontal" || this.siloType === "rect") ? this.dims.length : this.dims.diameter;
@@ -56,7 +66,6 @@ export class CoverageMap {
           const dist = Math.sqrt(Math.pow(cellX - pos.x, 2) + Math.pow(cellZ - pos.z, 2));
           
           if (dist <= radius) {
-            // Overlap tespiti: Her gören sensör sayacı 1 artırır
             this.grid[r][c] += 1; 
           }
         }
@@ -76,13 +85,11 @@ export class CoverageMap {
         if (this.grid[r][c] !== -1) {
           const hitCount = this.grid[r][c];
           
-          // Mantık: En az 1 sensör görüyorsa hücre kapsanmıştır (Sensor1 OR Sensor2...)
           if (hitCount > 0) coveredCount++;
 
           const x = (c + 0.5) * this.resolution - (width / 2);
           const z = (r + 0.5) * this.resolution - (length / 2);
 
-          // hitCount (0, 1, 2, 3...) doğrudan dışarı aktarılıyor
           gridData.push({ x, z, hitCount: hitCount });
         }
       }

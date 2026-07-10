@@ -113,17 +113,17 @@ export default function ControlPanel({
           </div>
 
           <button 
-            className="optimize-btn" onClick={onOptimize}
-            disabled={sensorCount > 1}
+            className="optimize-btn" 
+            onClick={onOptimize}
             style={{ 
               marginTop: '15px', width: '100%', padding: '10px', 
-              cursor: sensorCount > 1 ? 'not-allowed' : 'pointer',
-              backgroundColor: sensorCount > 1 ? '#95a5a6' : '#4a90e2',
+              cursor: 'pointer',
+              backgroundColor: '#4a90e2',
               color: 'white', border: 'none',
               borderRadius: '4px', fontWeight: 'bold', transition: 'background-color 0.2s'
             }}
           >
-            {sensorCount > 1 ? "Çoklu Optimizasyon Yakında" : "En İyi Konumu Bul ⚡"}
+            Optimizasyonu Başlat ⚡
           </button>
         </section>
 

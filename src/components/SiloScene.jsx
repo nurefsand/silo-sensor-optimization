@@ -5,7 +5,7 @@ import { createSiloMesh } from "../geometry/createSiloGeometry";
 import { createSensorMesh } from "../geometry/sensorGeometry";
 import { CoverageMap } from "../analysis/coverageMap";
 import { generateCandidates } from "../analysis/candidateGenerator";
-import { findBestPosition } from "../analysis/optimizer";
+import { findBestPosition, findBestMultiPosition } from "../analysis/optimizer";
 
 // 3D Bilgi Etiketi Üreticisi
 function createLabelSprite(text1, text2) {
@@ -41,6 +41,7 @@ export default function SiloScene({
   const currentBoxRef = useRef(null);
   
   const [sensorPos, setSensorPos] = useState(null);
+  const [multiPositions, setMultiPositions] = useState([]);
   const [bestScoreDetails, setBestScoreDetails] = useState(null);
 
   // EKSEN FARKINDALIKLI ÇOKLU SENSÖR YERLEŞİM ALGORİTMASI
@@ -54,13 +55,11 @@ export default function SiloScene({
       return positions;
     }
     
-    // Yatay ve Dikdörtgen silolarda sensörleri sırt (uzunluk) boyunca düz bir hatta diz
     if (siloType === "horizontal" || siloType === "rect") {
-      // Çap uzunluktan büyük olsa bile kesin ekseni bulur
       const isXLength = Math.abs(size.x - dims.length) < Math.abs(size.z - dims.length);
       const length = dims.length;
       const step = length / count;
-      const start = (-length / 2) + (step / 2); // Kenarlara yapışmaması için ortala
+      const start = (-length / 2) + (step / 2);
 
       for (let i = 0; i < count; i++) {
         const offset = start + (i * step);
@@ -73,7 +72,6 @@ export default function SiloScene({
       return positions;
     }
 
-    // Dikey silolarda (Cylinder vb.) sensörleri merkez etrafında dairesel diz
     const R = Math.max(size.x, size.z) / 2;
     const radius = R * 0.5;
     
@@ -86,21 +84,35 @@ export default function SiloScene({
     return positions;
   };
 
+  // DÜZELTME: Sensör sayısı değişince eski optimizasyon verilerini temizle
   useEffect(() => {
     setSensorPos(null);
+    setMultiPositions([]);
     setBestScoreDetails(null);
-  }, [siloType, dims]);
+  }, [siloType, dims, sensorCount]);
 
   useEffect(() => {
     if (onOptimizeRef) {
       onOptimizeRef.current = () => {
-        if (!currentBoxRef.current || sensorCount > 1) return;
-        const candidates = generateCandidates(siloType, dims, currentBoxRef.current);
-        const best = findBestPosition(siloType, dims, sensorFov, sensorRange, candidates);
+        if (!currentBoxRef.current) return;
         
-        if (best) {
-          setSensorPos(new THREE.Vector3(best.x, best.y, best.z));
-          setBestScoreDetails(best.scoreDetails);
+        const candidates = generateCandidates(siloType, dims, currentBoxRef.current);
+        
+        if (sensorCount === 1) {
+          const best = findBestPosition(siloType, dims, sensorFov, sensorRange, candidates);
+          if (best) {
+            setSensorPos(new THREE.Vector3(best.x, best.y, best.z));
+            setBestScoreDetails(best.scoreDetails);
+            setMultiPositions([]);
+          }
+        } else {
+          const initialPositions = getEquidistantPositions(sensorCount, currentBoxRef.current);
+          const bestSensors = findBestMultiPosition(siloType, dims, sensorFov, sensorRange, candidates, sensorCount, initialPositions);
+          
+          if (bestSensors) {
+            setMultiPositions(bestSensors.map(s => new THREE.Vector3(s.pos.x, s.pos.y, s.pos.z)));
+            setBestScoreDetails(null);
+          }
         }
       };
     }
@@ -155,18 +167,7 @@ export default function SiloScene({
     group.clear();
 
     const siloMesh = createSiloMesh(siloType, dims, { wireframe });
-    
-    if (!wireframe) {
-      siloMesh.traverse((child) => {
-        if (child.isMesh && child.material) {
-          child.material.transparent = true;
-          child.material.opacity = 0.20;
-          child.material.depthWrite = false;
-        }
-      });
-    }
     group.add(siloMesh);
-
     const box = new THREE.Box3().setFromObject(siloMesh);
     currentBoxRef.current = box;
 
@@ -174,12 +175,16 @@ export default function SiloScene({
     const pointsGroup = new THREE.Group();
     points.forEach((p) => {
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffd700 }));
-      mesh.position.copy(p);
+      mesh.position.set(p.x, p.y, p.z);
       pointsGroup.add(mesh);
     });
     group.add(pointsGroup);
 
-    const positions = getEquidistantPositions(sensorCount, box);
+    // DÜZELTME: Çoklu pozisyonların sayısı sensör sayısıyla eşleşiyorsa kullan
+    const positions = (multiPositions.length === sensorCount && sensorCount > 1) 
+      ? multiPositions 
+      : getEquidistantPositions(sensorCount, box);
+      
     const sensorsData = [];
 
     positions.forEach((pos, index) => {
@@ -199,7 +204,6 @@ export default function SiloScene({
       cone.position.copy(pos);
       group.add(cone);
 
-      // Etiketi sadece 1 sensör varken göster
       if (index === 0 && sensorCount === 1 && bestScoreDetails) {
         const label = createLabelSprite(`Kapsama: %${bestScoreDetails.coverageScore}`, `Skor: ${bestScoreDetails.total}`);
         label.position.set(pos.x + 2, pos.y + 1, pos.z);
@@ -222,7 +226,7 @@ export default function SiloScene({
       });
     }
 
-  }, [siloType, dims, wireframe, sensorFov, sensorRange, sensorCount, sensorPos, bestScoreDetails, onAnalysisUpdate]);
+  }, [siloType, dims, wireframe, sensorFov, sensorRange, sensorCount, sensorPos, multiPositions, bestScoreDetails, onAnalysisUpdate]);
 
   return <div ref={mountRef} style={{ width: "100%", height: "100%", display: "block" }} />;
 }
