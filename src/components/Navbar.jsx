@@ -2,8 +2,8 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar-brand">
-        <span className="navbar-logo" role="img" aria-label="Silo logo">🌾</span>
-        <span className="navbar-title">Silo</span>
+        <span className="navbar-logo" role="img" aria-label="SiloSense logo">🌾</span>
+        <span className="navbar-title">SiloSense</span>
       </div>
       <div className="navbar-actions">
         <button className="icon-button" title="Ayarlar" aria-label="Ayarlar">

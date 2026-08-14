@@ -1,5 +1,5 @@
 import { CoverageMap } from "./coverageMap";
-import { OPTIMIZER_WEIGHTS } from "../config/constants";
+import { OPTIMIZER_WEIGHTS, MULTI_SENSOR_WEIGHTS } from "../config/constants";
 
 function calculateDistanceMetrics(point, siloType, dims) {
   const R = (siloType === "horizontal" ? dims.length : dims.diameter) / 2;
@@ -60,10 +60,29 @@ export function findBestPosition(siloType, dims, sensorFov, sensorRange, candida
   return bestPoint;
 }
 
-function computeCoverage(siloType, dims, sensors) {
+// ÇOKLU SENSÖR OBJECTIVE FUNCTION
+// TotalScore = w_coverage*CoverageScore + w_overlap*(1-OverlapPercent/100)
+//            + w_distribution*DistributionScore + w_wall*WallScoreAvg
+// Tek bir CoverageMap / tek bir getMetrics() çağrısı ile coverage+overlap+distribution alınır.
+export function computeSetScore(siloType, dims, sensors) {
   const analyzer = new CoverageMap(siloType, dims);
   analyzer.applyMultiSensorCoverage(sensors);
-  return analyzer.getMetrics().coveragePercent;
+  const metrics = analyzer.getMetrics();
+
+  const coverageScore = metrics.coveragePercent / 100;
+  const overlapTerm = 1 - (metrics.overlapPercent / 100);
+  const distributionScore = metrics.distributionScore;
+
+  const wallScoreAvg = sensors.reduce((sum, s) => {
+    return sum + calculateDistanceMetrics(s.pos, siloType, dims).wallScore;
+  }, 0) / sensors.length;
+
+  return (
+    (coverageScore * MULTI_SENSOR_WEIGHTS.coverage) +
+    (overlapTerm * MULTI_SENSOR_WEIGHTS.overlap) +
+    (distributionScore * MULTI_SENSOR_WEIGHTS.distribution) +
+    (wallScoreAvg * MULTI_SENSOR_WEIGHTS.wall)
+  );
 }
 
 function isTooCloseToOthers(point, others, minDist = 1.0) {
@@ -81,21 +100,21 @@ function isTooCloseToOthers(point, others, minDist = 1.0) {
 //     her sensörü sırayla çıkarıp daha iyi bir aday varsa DEĞİŞTİRİR - ama sadece skor
 //     GERÇEKTEN artıyorsa. Bu yüzden sonuç, başlangıç diziliminden ASLA daha kötü olamaz.
 export function findBestMultiPosition(siloType, dims, sensorFov, sensorRange, candidatePoints, count, initialPositions = []) {
-  let placedSensors = initialPositions.map((pos) => ({ pos, fov: sensorFov }));
+  let placedSensors = [];
 
   // --- Aşama 1: eksik sensörleri greedy ekle (initialPositions count'tan azsa) ---
   while (placedSensors.length < count) {
     let bestCandidate = null;
-    let maxCoverageGain = -1;
+    let maxTotalScore = -1;
 
     candidatePoints.forEach((point) => {
       if (isTooCloseToOthers(point, placedSensors)) return;
 
       const testSensors = [...placedSensors, { pos: point, fov: sensorFov }];
-      const coverage = computeCoverage(siloType, dims, testSensors);
+      const score = computeSetScore(siloType, dims, testSensors);
 
-      if (coverage > maxCoverageGain) {
-        maxCoverageGain = coverage;
+      if (score > maxTotalScore) {
+        maxTotalScore = score;
         bestCandidate = point;
       }
     });
@@ -121,7 +140,7 @@ export function findBestMultiPosition(siloType, dims, sensorFov, sensorRange, ca
 
     for (let i = 0; i < placedSensors.length; i++) {
       const others = placedSensors.filter((_, idx) => idx !== i);
-      const currentScore = computeCoverage(siloType, dims, placedSensors);
+      const currentScore = computeSetScore(siloType, dims, placedSensors);
 
       let bestReplacement = null;
       let bestReplacementScore = currentScore; // sadece BUNDAN kesinlikle iyisini kabul et
@@ -130,7 +149,7 @@ export function findBestMultiPosition(siloType, dims, sensorFov, sensorRange, ca
         if (isTooCloseToOthers(point, others)) return;
 
         const testSensors = [...others, { pos: point, fov: sensorFov }];
-        const score = computeCoverage(siloType, dims, testSensors);
+        const score = computeSetScore(siloType, dims, testSensors);
 
         if (score > bestReplacementScore) {
           bestReplacementScore = score;

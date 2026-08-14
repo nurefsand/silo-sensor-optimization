@@ -175,7 +175,6 @@ export default function ResultPanel({
             <span>Kapsama: <strong style={{ color: "#21ce99" }}>%{suggestion.coveragePercent.toFixed(1)}</strong></span>
             <span>Kör Nokta: <strong style={{ color: "#ff4d4f" }}>%{suggestion.blindSpotPercent.toFixed(1)}</strong></span>
             <span>Örtüşme: <strong style={{ color: "#f39c12" }}>%{suggestion.overlapPercent.toFixed(1)}</strong></span>
-            <span>Son sensörün katkısı: <strong>%{suggestion.marginalGain.toFixed(1)}</strong></span>
           </div>
 
           <div style={{ paddingTop: "8px", borderTop: "1px dashed #d5d5d5", lineHeight: 1.5 }}>

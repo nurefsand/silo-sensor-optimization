@@ -222,7 +222,7 @@ export default function SiloScene({
 
     positions.forEach((pos, index) => {
       const sensorMesh = createSensorMesh(siloType, dims);
-      sensorMesh.position.set(pos.x, pos.y + 0.1, pos.z);
+      sensorMesh.position.set(pos.x, pos.y, pos.z);
       group.add(sensorMesh);
 
       const viewHeight = pos.y - box.min.y;

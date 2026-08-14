@@ -75,7 +75,15 @@ export class CoverageMap {
 
   getMetrics() {
     let coveredCount = 0;
+    let overlapCount = 0;
     const gridData = [];
+
+    // 8 açısal sektör için sayaçlar (aynı tarama döngüsü içinde dolduruluyor,
+    // ikinci bir grid taraması YOK)
+    const SECTOR_COUNT = 8;
+    const sectorCovered = new Array(SECTOR_COUNT).fill(0);
+    const sectorTotal = new Array(SECTOR_COUNT).fill(0);
+    const sectorAngleStep = (Math.PI * 2) / SECTOR_COUNT;
 
     let width = this.dims.diameter;
     let length = (this.siloType === "horizontal" || this.siloType === "rect") ? this.dims.length : this.dims.diameter;
@@ -84,11 +92,21 @@ export class CoverageMap {
       for (let c = 0; c < this.cols; c++) {
         if (this.grid[r][c] !== -1) {
           const hitCount = this.grid[r][c];
-          
+
           if (hitCount > 0) coveredCount++;
+          if (hitCount > 1) overlapCount++;
 
           const x = (c + 0.5) * this.resolution - (width / 2);
           const z = (r + 0.5) * this.resolution - (length / 2);
+
+          // Sektör indeksi: hücrenin silo merkezine (0,0) göre açısı
+          const angle = Math.atan2(z, x); // [-PI, PI]
+          let sectorIndex = Math.floor((angle + Math.PI) / sectorAngleStep);
+          if (sectorIndex >= SECTOR_COUNT) sectorIndex = SECTOR_COUNT - 1; // sınır güvenliği
+          if (sectorIndex < 0) sectorIndex = 0;
+
+          sectorTotal[sectorIndex]++;
+          if (hitCount > 0) sectorCovered[sectorIndex]++;
 
           gridData.push({ x, z, hitCount: hitCount });
         }
@@ -96,10 +114,34 @@ export class CoverageMap {
     }
 
     const coveragePercent = this.validCellCount === 0 ? 0 : (coveredCount / this.validCellCount) * 100;
-    
+    // overlapPercent: KAPSANAN alanın ne kadarı birden fazla sensör tarafından
+    // tekrar kapsanıyor (payda coveredCount, validCellCount DEĞİL).
+    // coveredCount === 0 ise (hiçbir hücre kapsanmıyorsa) NaN/division-by-zero
+    // oluşmaması için güvenli şekilde 0 döndürülür.
+    const overlapPercent = coveredCount === 0 ? 0 : (overlapCount / coveredCount) * 100;
+
+    // Sektör bazlı kapsama yüzdeleri (yalnızca en az 1 geçerli hücresi olan sektörler)
+    const sectorCoveragePercents = [];
+    for (let i = 0; i < SECTOR_COUNT; i++) {
+      if (sectorTotal[i] > 0) {
+        sectorCoveragePercents.push((sectorCovered[i] / sectorTotal[i]) * 100);
+      }
+    }
+
+    let distributionScore = 1;
+    if (sectorCoveragePercents.length >= 2) {
+      const mean = sectorCoveragePercents.reduce((sum, v) => sum + v, 0) / sectorCoveragePercents.length;
+      const variance = sectorCoveragePercents.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / sectorCoveragePercents.length;
+      const std = Math.sqrt(variance);
+      // 50, [0,100] aralığındaki bir değişkenin std'si için teorik üst sınır kabul ediliyor
+      distributionScore = 1 - Math.min(1, std / 50);
+    }
+
     return {
       coveragePercent: coveragePercent,
       blindSpotPercent: 100 - coveragePercent,
+      overlapPercent: overlapPercent,
+      distributionScore: distributionScore,
       gridData: gridData 
     };
   }

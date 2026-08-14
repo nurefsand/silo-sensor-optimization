@@ -1,25 +1,12 @@
 import { CoverageMap } from "./coverageMap";
-import { findBestMultiPosition } from "./optimizer";
+import { findBestMultiPosition, computeSetScore } from "./optimizer";
 
-const DEFAULT_MARGINAL_THRESHOLD = 5;
+const DEFAULT_SCORE_TOLERANCE = 0.01;
 
 function evaluateCoverage(siloType, dims, sensors) {
   const analyzer = new CoverageMap(siloType, dims);
   analyzer.applyMultiSensorCoverage(sensors);
   return analyzer.getMetrics();
-}
-
-// Overlap: kapsanan (hitCount > 0) hücreler arasında, birden fazla sensör
-// tarafından görülenlerin (hitCount > 1) oranı. Yeni bir hesaplama DEĞİL -
-// zaten evaluateCoverage() içinde üretilen gridData'nın üzerinden sayıyor.
-function computeOverlapPercent(gridData) {
-  if (!gridData || gridData.length === 0) return 0;
-
-  const coveredCells = gridData.filter((cell) => cell.hitCount > 0);
-  if (coveredCells.length === 0) return 0;
-
-  const overlappingCells = coveredCells.filter((cell) => cell.hitCount > 1);
-  return (overlappingCells.length / coveredCells.length) * 100;
 }
 
 function yieldToBrowser() {
@@ -28,9 +15,11 @@ function yieldToBrowser() {
 
 /**
  * 1'den maxCount'a kadar HER sensör sayısı için mevcut findBestMultiPosition
- * ile optimum yerleşimi hesaplar; her adımda coverage, blind spot, overlap ve
- * marjinal kazancı çıkarır. Overlap dahil hepsi TEK bir evaluateCoverage()
- * çağrısından türetiliyor - tekrar hesaplama yok.
+ * ile optimum yerleşimi hesaplar; her adımda coverage, blind spot, overlap,
+ * distribution ve totalScore'u çıkarır. overlapPercent artık tek kaynaktan
+ * (CoverageMap.getMetrics, kapsanan-alan-bazlı) geliyor - ayrı bir hesaplama
+ * yok. totalScore da optimizer.js'teki computeSetScore() ile aynı formülü
+ * (tek kaynak) kullanıyor.
  */
 export async function analyzeSensorCountRange(siloType, dims, sensorFov, sensorRange, candidatePoints, maxCount, onProgress) {
   const results = [];
@@ -38,16 +27,15 @@ export async function analyzeSensorCountRange(siloType, dims, sensorFov, sensorR
   for (let count = 1; count <= maxCount; count++) {
     const sensors = findBestMultiPosition(siloType, dims, sensorFov, sensorRange, candidatePoints, count, []);
     const metrics = evaluateCoverage(siloType, dims, sensors);
-
-    const previous = results[results.length - 1];
-    const marginalGain = previous ? metrics.coveragePercent - previous.coveragePercent : metrics.coveragePercent;
+    const totalScore = computeSetScore(siloType, dims, sensors);
 
     const entry = {
       count,
       coveragePercent: metrics.coveragePercent,
       blindSpotPercent: metrics.blindSpotPercent,
-      overlapPercent: computeOverlapPercent(metrics.gridData),
-      marginalGain,
+      overlapPercent: metrics.overlapPercent,
+      distributionScore: metrics.distributionScore,
+      totalScore,
       sensors,
     };
 
@@ -60,44 +48,71 @@ export async function analyzeSensorCountRange(siloType, dims, sensorFov, sensorR
   return results;
 }
 
-export function suggestOptimalCount(results, marginalThreshold = DEFAULT_MARGINAL_THRESHOLD) {
+/**
+ * Strateji C: TotalScore'un global maksimumunu bulur, sonra en DÜŞÜK count'tan
+ * başlayarak bu maksimuma "scoreTolerance" içinde kalan İLK sonucu döndürür.
+ */
+export function suggestOptimalCount(results, scoreTolerance = DEFAULT_SCORE_TOLERANCE) {
   if (!results || results.length === 0) return null;
 
-  for (let i = 1; i < results.length; i++) {
-    if (results[i].marginalGain < marginalThreshold) {
-      return results[i - 1];
+  const maxTotalScore = results.reduce(
+    (max, r) => (r.totalScore > max ? r.totalScore : max),
+    -Infinity
+  );
+  const acceptableScore = maxTotalScore - scoreTolerance;
+
+  for (const r of results) {
+    if (r.totalScore >= acceptableScore) {
+      return r;
     }
   }
+
+  // Teorik güvenli fallback (normalde buraya hiç düşülmez, çünkü global
+  // maksimumu üreten sonuç her zaman acceptableScore koşulunu sağlar).
   return results[results.length - 1];
 }
 
 export async function suggestOptimalSensorCount(siloType, dims, sensorFov, sensorRange, candidatePoints, maxCount, options = {}) {
-  const { marginalThreshold = DEFAULT_MARGINAL_THRESHOLD, onProgress } = options;
+  const { scoreTolerance = DEFAULT_SCORE_TOLERANCE, onProgress } = options;
   const results = await analyzeSensorCountRange(siloType, dims, sensorFov, sensorRange, candidatePoints, maxCount, onProgress);
-  const suggestion = suggestOptimalCount(results, marginalThreshold);
+  const suggestion = suggestOptimalCount(results, scoreTolerance);
   return { results, suggestion };
 }
 
 /**
  * results + suggestion'dan doğal dilde bir karar açıklaması üretir.
- * Saf fonksiyon - hiçbir yeni hesaplama/state gerektirmez, sadece var olan
- * verinin (coveragePercent, overlapPercent, marginalGain) yorumlanmasıdır.
+ * Saf fonksiyon - hiçbir yeni hesaplama/state gerektirmez. Global maksimum
+ * TotalScore ve tolerans üzerinden anlatım kuruyor - karar mekanizması
+ * (suggestOptimalCount) da aynı mantığı kullanıyor.
  */
-export function buildDecisionExplanation(results, suggestion) {
+export function buildDecisionExplanation(results, suggestion, scoreTolerance = DEFAULT_SCORE_TOLERANCE) {
   if (!suggestion || !results || results.length === 0) return "";
 
-  const nextEntry = results.find((r) => r.count === suggestion.count + 1);
+  const maxTotalScore = results.reduce(
+    (max, r) => (r.totalScore > max ? r.totalScore : max),
+    -Infinity
+  );
+  const bestEntry = results.find((r) => r.totalScore === maxTotalScore);
 
-  let text = `${suggestion.count} sensör önerildi çünkü %${suggestion.coveragePercent.toFixed(1)} kapsama sağlıyor`;
+  let text = `${suggestion.count} sensör önerildi; bu yerleşim ${suggestion.totalScore.toFixed(4)} TotalScore ile`;
+
+  if (bestEntry && bestEntry.count === suggestion.count) {
+    text += ` en yüksek skoru sağlıyor`;
+  } else {
+    text += ` en yüksek skora (${maxTotalScore.toFixed(4)}, ${bestEntry.count} sensörle) ${scoreTolerance.toFixed(2)} tolerans içinde ulaşıyor`;
+  }
+
+  text += `; %${suggestion.coveragePercent.toFixed(1)} kapsama sağlıyor`;
 
   if (suggestion.overlapPercent > 0.5) {
     text += ` (kapsanan alanın %${suggestion.overlapPercent.toFixed(1)}'i sensörler arasında örtüşüyor)`;
   }
 
-  if (nextEntry) {
-    text += `; ${nextEntry.count}. sensör yalnızca %${nextEntry.marginalGain.toFixed(1)} ek katkı sağladığı için önerilmedi.`;
+  const cheaperExists = results.some((r) => r.count < suggestion.count);
+  if (cheaperExists) {
+    text += `. Daha az sensörle bu skora ${scoreTolerance.toFixed(2)} tolerans içinde ulaşılamıyor.`;
   } else {
-    text += `. Denenen maksimum sensör sayısına (${results[results.length - 1].count}) ulaşıldı, daha fazlası test edilmedi.`;
+    text += `.`;
   }
 
   return text;

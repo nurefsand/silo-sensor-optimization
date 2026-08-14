@@ -3,7 +3,7 @@ import Navbar from './components/Navbar';
 import SiloScene from './components/SiloScene';
 import ControlPanel from './components/ControlPanel';
 import ResultPanel from './components/ResultPanel';
-import './App.css'; 
+import './app.css'; 
 
 function App() {
   const [siloType, setSiloType] = useState('cylinder');

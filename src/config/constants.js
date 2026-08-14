@@ -5,6 +5,13 @@ export const OPTIMIZER_WEIGHTS = {
   symmetry: 0.05
 };
 
+export const MULTI_SENSOR_WEIGHTS = {
+  coverage: 0.55,
+  overlap: 0.10,
+  distribution: 0.15,
+  wall: 0.20
+};
+
 export const HEATMAP_COLORS = {
   FULL: 'rgba(46, 204, 113, 0.85)',   // Yeşil - Tam Kapsama
   PARTIAL: 'rgba(241, 196, 15, 0.85)', // Sarı - Kısmi Kapsama (Gelecek tahıl eğimleri için ideal)

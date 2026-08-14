@@ -1,5 +1,5 @@
 import { SILO_TYPES, FIELD_LABELS, FIELD_RANGES, getSiloTypeConfig } from "../geometry/siloTypes";
-import InfoCard from "./InfoCard";
+import InfoCard from "./Infocard";
 import HeatmapRenderer from "./HeatmapRenderer";
 import { OPTIMIZER_WEIGHTS } from "../config/constants"; 
 
