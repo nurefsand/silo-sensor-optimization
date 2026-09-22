@@ -89,7 +89,9 @@ npm run dev
 
 # Ekran Görüntüleri
 
-> Proje geliştikçe bu bölüme ekran görüntüleri eklenecektir.
+ <img width="892" height="415" alt="Ekran Resmi 2026-09-22 ÖS 3 28 49" src="https://github.com/user-attachments/assets/96a079bb-3b75-41e1-a895-cc50a598a114" />
+<img width="966" height="328" alt="Ekran Resmi 2026-09-22 ÖS 3 29 40" src="https://github.com/user-attachments/assets/63616f75-b7a3-455b-9b33-bf90bcb51670" />
+
 
 ---
 
